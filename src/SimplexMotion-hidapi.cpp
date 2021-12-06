@@ -1,100 +1,58 @@
 #include "SimplexMotion.h"
 #include "SimplexMotion-com.h"
 
-#include <linux/types.h>
-#include <linux/input.h>
-#include <linux/hidraw.h>
+#include <stdio.h>
+#include <wchar.h>
 
-#ifndef HIDIOCSFEATURE
-#warning Please have your distro update the userspace kernel headers
-#define HIDIOCSFEATURE(len)    _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x06, len)
-#define HIDIOCGFEATURE(len)    _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x07, len)
-#endif
-
-#define S1(x) #x
-#define S2(x) S1(x)
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define LOG cout <<"# " <<__FILENAME__ <<":" <<S2(__LINE__) <<": "
-
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <string.h>
-#include <errno.h>
+#include <hidapi/hidapi.h>
 #include <iostream>
 #include <iomanip>
-#include <cstdint>
 
 using std::cerr;
 using std::cout;
 using std::endl;
 
 struct SimplexMotion_Communication_Self{
-  int fd;
-  unsigned char buf[256];
-  hidraw_report_descriptor rpt_desc;
-  hidraw_devinfo info;
+  unsigned char buf[65];
+  hid_device *handle;
+  int i;
 };
 
 SimplexMotion_Communication::SimplexMotion_Communication(const char* devPath){
   self = new SimplexMotion_Communication_Self;
 
-  self->fd = open(devPath, O_RDWR); //|O_NONBLOCK);
+  // Initialize the hidapi library
+  int res = hid_init();
 
-  if(self->fd<0) {
-    cerr <<"Unable to open device " <<devPath <<endl;
-    return;
-  }
+  // Open the device using the VID, PID,
+  // and optionally the Serial number.
+  self->handle = hid_open(0x04d8, 0xf79a, NULL);
 
-  memset(&self->rpt_desc, 0x0, sizeof(self->rpt_desc));
-  memset(&self->info, 0x0, sizeof(self->info));
-  memset(self->buf, 0x0, sizeof(self->buf));
+  // Read the Manufacturer String
+  wchar_t wstr[256];
+  res = hid_get_manufacturer_string(self->handle, wstr, 256);
+//	wprintf(L"Manufacturer String: %s\n", wstr);
 
-#if 0
-  /* Get Report Descriptor Size */
-  int desc_size = 0;
-  int res = ioctl(self->fd, HIDIOCGRDESCSIZE, &desc_size);
-  if(res<0) cerr <<"HIDIOCGRDESCSIZE error" <<endl;
-  else cout <<"Report Descriptor Size: " <<desc_size <<endl;
+  // Read the Product String
+  res = hid_get_product_string(self->handle, wstr, 256);
+//	wprintf(L"Product String: %s\n", wstr);
 
-  /* Get Report Descriptor */
-  self->rpt_desc.size = desc_size;
-  res = ioctl(self->fd, HIDIOCGRDESC, &self->rpt_desc);
-  if(res<0) cerr <<"HIDIOCGRDESC error" <<endl;
-  else{
-    cout <<"Report Descriptor: ";
-    for(int i=0; i<desc_size; i++) cout <<"0x" <<std::hex <<self->rpt_desc.value[i];
-    cout <<endl;
-  }
+  // Read the Serial Number String
+  res = hid_get_serial_number_string(self->handle, wstr, 256);
+//	wprintf(L"Serial Number String: (%d) %s\n", wstr[0], wstr);
 
-  /* Get Physical Location */
-  res = ioctl(self->fd, HIDIOCGRAWPHYS(256), self->buf);
-  if(res<0) cerr <<"HIDIOCGRAWPHYS error" <<endl;
-  else cout <<"Raw Phys: " <<self->buf <<endl;
-#endif
-
-  /* Get Raw Name */
-  int res = ioctl(self->fd, HIDIOCGRAWNAME(256), self->buf);
-  if(res<0) cerr <<"HIDIOCGRAWNAME error" <<endl;
-  else LOG <<"Raw Name: " <<self->buf <<endl;
-
-  /* Get Raw Info */
-  res = ioctl(self->fd, HIDIOCGRAWINFO, &self->info);
-  if(res<0) cerr <<"HIDIOCGRAWINFO error" <<endl;
-  else{
-    LOG <<"Raw Info: bustype: " <<self->info.bustype <<" (";
-    if(self->info.bustype==BUS_USB) cout <<"USB";
-    else if(self->info.bustype==BUS_HIL) cout <<"HIL";
-    else if(self->info.bustype==BUS_BLUETOOTH) cout <<"Bluetooth";
-    else if(self->info.bustype==BUS_VIRTUAL) cout <<"Virtual";
-    else cout <<"Other";
-    cout <<") vendor: 0x" <<std::hex <<self->info.vendor;
-    cout <<" product: 0x" <<std::hex <<self->info.product <<endl;
-  }
+  // Read Indexed String 1
+  res = hid_get_indexed_string(self->handle, 1, wstr, 256);
+//	wprintf(L"Indexed String 1: %s\n", wstr);
 }
 
 SimplexMotion_Communication::~SimplexMotion_Communication(){
-  close(self->fd);
+  // Close the device
+  hid_close(self->handle);
+
+  // Finalize the hidapi library
+  hid_exit();
+
   delete self;
 }
 
@@ -135,7 +93,7 @@ void SimplexMotion_Communication::writeRegister(int regNumber, RegType regType, 
   self->buf[2] = regNumber&0xff;
   self->buf[3] = regNumber>>8;
 
-  int res = write(self->fd, self->buf, buflen);
+  int res = hid_write(self->handle, self->buf, buflen);
   if(res!=buflen) cerr <<"write error: " <<errno <<" written bytes:" <<res <<" wanted bytes:" <<buflen <<endl;
 }
 
@@ -155,13 +113,13 @@ int SimplexMotion_Communication::readRegister(int regNumber, RegType regType){
   self->buf[2] = regNumber&0xff;
   self->buf[3] = regNumber>>8;
 
-  int res = write(self->fd, self->buf, 4);
+  int res = hid_write(self->handle, self->buf, 4);
   if(res!=4){
     cerr <<"write error: " <<errno <<" written bytes:" <<res <<" wanted bytes:" <<4 <<endl;
     return 0;
   }
 
-  res = read(self->fd, self->buf, readlen);
+  res = hid_read(self->handle, self->buf, readlen);
   if(res!=readlen){
     cerr <<"read error: " <<errno <<" read bytes:" <<res <<" wanted bytes:" <<readlen <<endl;
     return 0;
