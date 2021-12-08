@@ -8,7 +8,7 @@
 struct SimplexMotion{
   struct SimplexMotion_Communication* com=0;
 
-  SimplexMotion(const char* devPath = "/dev/hidraw0");
+  SimplexMotion(const char* devPath = "/dev/hidraw0", unsigned short vendor_id = 0x04d8, unsigned short product_id = 0xf79a);
   ~SimplexMotion();
 
   double getVoltage();

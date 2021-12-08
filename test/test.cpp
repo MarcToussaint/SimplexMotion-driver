@@ -9,7 +9,10 @@ using std::endl;
 
 int main(int argc, char **argv){
 
-  SimplexMotion M("/dev/hidraw2");
+  const char* devPath = "/dev/hidraw0";
+  if(argc>1) devPath = argv[1];
+
+  SimplexMotion M(devPath);
 
   cout <<"motor temperature:" <<M.getMotorTemperature() <<std::dec <<endl;
 

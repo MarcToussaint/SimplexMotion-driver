@@ -1,6 +1,5 @@
 #include "SimplexMotion.h"
 #include "SimplexMotion-com.h"
-#include "SimplexMotion-registers.h"
 
 #include <iostream>
 
@@ -9,8 +8,8 @@ using std::cerr;
 
 //===========================================================================
 
-SimplexMotion::SimplexMotion(const char* devPath) {
-  com = new SimplexMotion_Communication(devPath);
+SimplexMotion::SimplexMotion(const char* devPath, unsigned short vendor_id, unsigned short product_id) {
+  com = new SimplexMotion_Communication(devPath, vendor_id, product_id);
 }
 
 SimplexMotion::~SimplexMotion() {
