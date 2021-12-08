@@ -11,6 +11,10 @@ struct SimplexMotion{
   SimplexMotion(const char* devPath = "/dev/hidraw0", unsigned short vendor_id = 0x04d8, unsigned short product_id = 0xf79a);
   ~SimplexMotion();
 
+  const char* getModelName();
+  const char* getSerialNumber();
+  int getAddress();
+
   double getVoltage();
   double getMotorTemperature();
   double getMotorPosition();

@@ -17,6 +17,18 @@ SimplexMotion::~SimplexMotion() {
 
 }
 
+const char* SimplexMotion::getModelName(){
+  return com->readString(REG_MODEL_NAME, 20);
+}
+
+const char* SimplexMotion::getSerialNumber(){
+  return com->readString(REG_SERIAL_NUMBER, 20);
+}
+
+int SimplexMotion::getAddress(){
+  return com->readRegister(REG_ADDRESS, com->uns16);
+}
+
 double SimplexMotion::getVoltage(){
   return com->readRegister(REG_SUPPLY, com->uns16) * .01;
 }

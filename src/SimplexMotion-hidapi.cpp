@@ -1,19 +1,13 @@
 #include "SimplexMotion-com.h"
 
-#include <wchar.h>
 #include <string.h>
-
 #include <hidapi/hidapi.h>
 #include <iostream>
 
 #define S1(x) #x
 #define S2(x) S1(x)
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define LOG cout <<"# " <<__FILENAME__ <<":" <<S2(__LINE__) <<": "
-
-using std::cerr;
-using std::cout;
-using std::endl;
+#define LOG std::cout <<"# " <<__FILENAME__ <<":" <<S2(__LINE__) <<": "
 
 struct SimplexMotion_Communication_Self{
   hid_device *handle;
@@ -42,25 +36,28 @@ SimplexMotion_Communication::SimplexMotion_Communication(const char* devPath, un
   }
 
   // Read the Manufacturer String
-  wchar_t wstr[256];
-  res = hid_get_manufacturer_string(self->handle, wstr, 256);
+  wchar_t wstr[64];
+  res = hid_get_manufacturer_string(self->handle, wstr, 64);
   if(res<0) LOG <<"error: " <<hid_error(self->handle);
-  wprintf(L"Manufacturer String: %s\n", wstr);
+  wcstombs((char*)buf, wstr, 64);
+  LOG <<"Manufacturer String: '" <<buf <<"'" <<std::endl;
 
   // Read the Product String
-  res = hid_get_product_string(self->handle, wstr, 256);
+  res = hid_get_product_string(self->handle, wstr, 64);
   if(res<0) LOG <<"error: " <<hid_error(self->handle);
-  wprintf(L"Product String: %s\n", wstr);
+  wcstombs((char*)buf, wstr, 64);
+  LOG <<"Product String: '" <<buf <<"'" <<std::endl;
 
   // Read the Serial Number String
-  res = hid_get_serial_number_string(self->handle, wstr, 256);
+  res = hid_get_serial_number_string(self->handle, wstr, 64);
   if(res<0) LOG <<"error: " <<hid_error(self->handle);
-//	wprintf(L"Serial Number String: (%d) %s\n", wstr[0], wstr);
+  wcstombs((char*)buf, wstr, 64);
+  LOG <<"Serial Number: '" <<buf <<"'" <<std::endl;
 
   // Read Indexed String 1
-  res = hid_get_indexed_string(self->handle, 1, wstr, 256);
-  if(res<0) LOG <<"error: " <<hid_error(self->handle);
-//	wprintf(L"Indexed String 1: %s\n", wstr);
+//  res = hid_get_indexed_string(self->handle, 1, wstr, 64);
+//  if(res<0) LOG  <<"error: " <<hid_error(self->handle);
+//  LOG <<"Indexed String: '" <<wstr <<"'" <<std::endl;
 }
 
 SimplexMotion_Communication::~SimplexMotion_Communication(){
@@ -76,7 +73,7 @@ SimplexMotion_Communication::~SimplexMotion_Communication(){
 bool SimplexMotion_Communication::writeBuf(int len){
   int res = hid_write(self->handle, buf, len);
   if(res!=len){
-    cerr <<"write error: " <<errno <<" written bytes:" <<res <<" wanted bytes:" <<len <<endl;
+    LOG <<"write error: " <<errno <<" written bytes:" <<res <<" wanted bytes:" <<len <<std::endl;
     return false;
   }
   return true;
@@ -85,7 +82,7 @@ bool SimplexMotion_Communication::writeBuf(int len){
 bool SimplexMotion_Communication::readBuf(int len){
   int res = hid_read(self->handle, buf, len);
   if(res!=len){
-    cerr <<"read error: " <<errno <<" read bytes:" <<res <<" wanted bytes:" <<len <<endl;
+    LOG <<"read error: " <<errno <<" read bytes:" <<res <<" wanted bytes:" <<len <<std::endl;
     return false;
   }
   return true;

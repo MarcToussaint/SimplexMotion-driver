@@ -9,17 +9,21 @@ using std::endl;
 
 int main(int argc, char **argv){
 
-  const char* devPath = "/dev/hidraw0";
+  const char* devPath = "/dev/hidraw2";
   if(argc>1) devPath = argv[1];
 
   SimplexMotion M(devPath);
 
-  cout <<"motor temperature:" <<M.getMotorTemperature() <<std::dec <<endl;
+  cout <<"model name: '" <<M.getModelName() <<"'" <<endl;
+  cout <<"serial number: '" <<M.getSerialNumber() <<"'" <<endl;
+  cout <<"address: '" <<M.getAddress() <<"'" <<endl;
+  cout <<"motor temperature: " <<M.getMotorTemperature() <<endl;
+  cout <<"voltage: " <<M.getVoltage() <<endl;
 
 //  M.runCoggingCalibration(); return 0; //motor continuous until done
 
   M.setPID(200, 0, 200, 100, 2, 0);
-  M.runSpeed(10.);
+  M.runSpeed(2.);
 //  M.runPosition(0.);
 //  M.runTorque(.5);
 
