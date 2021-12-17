@@ -19,7 +19,7 @@ SimplexMotion_Communication::SimplexMotion_Communication(const char* devPath, un
   // Initialize the hidapi library
   int res = hid_init();
   if(res<0){
-    LOG <<"hid init error";
+    LOG <<"hid init error" <<std::endl;
     exit(0);
   }
 
@@ -31,26 +31,26 @@ SimplexMotion_Communication::SimplexMotion_Communication(const char* devPath, un
     self->handle = hid_open(vendor_id, product_id, NULL);
   }
   if(!self->handle){
-    LOG <<"hid open error";
+    LOG <<"hid open error" <<std::endl;
     exit(0);
   }
 
   // Read the Manufacturer String
   wchar_t wstr[64];
   res = hid_get_manufacturer_string(self->handle, wstr, 64);
-  if(res<0) LOG <<"error: " <<hid_error(self->handle);
+  if(res<0) LOG <<"error: " <<hid_error(self->handle) <<std::endl;
   wcstombs((char*)buf, wstr, 64);
   LOG <<"Manufacturer String: '" <<buf <<"'" <<std::endl;
 
   // Read the Product String
   res = hid_get_product_string(self->handle, wstr, 64);
-  if(res<0) LOG <<"error: " <<hid_error(self->handle);
+  if(res<0) LOG <<"error: " <<hid_error(self->handle) <<std::endl;
   wcstombs((char*)buf, wstr, 64);
   LOG <<"Product String: '" <<buf <<"'" <<std::endl;
 
   // Read the Serial Number String
   res = hid_get_serial_number_string(self->handle, wstr, 64);
-  if(res<0) LOG <<"error: " <<hid_error(self->handle);
+  if(res<0) LOG <<"error: " <<hid_error(self->handle) <<std::endl;
   wcstombs((char*)buf, wstr, 64);
   LOG <<"Serial Number: '" <<buf <<"'" <<std::endl;
 
