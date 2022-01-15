@@ -28,6 +28,7 @@ link_directories(
 if(USE_HIDRAW)
   set(SRCS
     src/SimplexMotion.cpp
+    src/SimplexMotion_ControlThread.cpp
     src/SimplexMotion-com.cpp
     src/SimplexMotion-hidraw.cpp)
 endif()
@@ -35,6 +36,7 @@ endif()
 if(USE_HIDAPI)
   set(SRCS
     src/SimplexMotion.cpp
+    src/SimplexMotion_ControlThread.cpp
     src/SimplexMotion-com.cpp
     src/SimplexMotion-hidapi.cpp)
 endif()
