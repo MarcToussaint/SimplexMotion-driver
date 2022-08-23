@@ -3,11 +3,12 @@
 
 #include <unistd.h>
 #include <iostream>
+#include <string.h>
 
 using std::cout;
 using std::endl;
 
-void miniTest(const char* devPath){
+void miniTest(const char* devPath, int argc, char **argv){
   SimplexMotion M(devPath);
 
   cout <<"model name: '" <<M.getModelName() <<"'" <<endl;
@@ -16,20 +17,31 @@ void miniTest(const char* devPath){
   cout <<"motor temperature: " <<M.getMotorTemperature() <<endl;
   cout <<"voltage: " <<M.getVoltage() <<endl;
 
-//  M.runCoggingCalibration(); return 0; //motor continuous until done
+  //-- calibrate motor cogging
+  if(!strcmp(argv[argc-1], "cogging")){
+    cout <<"Cogging Calibration... " <<endl;
+    M.runCoggingCalibration();
+    return; //motor continuous until done
+  }
 
-//  M.setPID(200, 0, 200, 100, 2, 0);
-//  M.runSpeed(2.);
-//  M.runPosition(0.);
-  M.runTorque(.02);
+  //-- set speed or torque command
+  if(!strcmp(argv[argc-1], "torque")){
+    cout <<"Constant Torque... " <<endl;
+    M.runTorque(.02);
+  }else{
+    cout <<"Constant Speed... " <<endl;
+    M.setPID(300, 0, 200, 100, 2, 0); //low gain...
+    M.runSpeed(1.);
+  }
 
-  for(uint t=0;t<200;t++){
+  //-- wait 1sec
+  for(uint t=0;t<100;t++){
     cout <<t <<" pos:" <<M.getMotorPosition() <<" vel:" <<M.getMotorSpeed() <<endl;
     usleep(10000);
   }
 
+  //-- stop
   M.runStop();
-
   usleep(500000);
   M.runOff();
 }
@@ -41,17 +53,33 @@ void threadTest(const char* devPath){
 
   M.setCmd({q0, 0., .05, 0.002, 0.});
 
-  sleep(20);
+  sleep(5);
+}
 
+void threadMultiple(const char* devPath1, const char* devPath2){
+  SimplexMotion_ControlThread M1(devPath1);
+  SimplexMotion_ControlThread M2(devPath2);
+
+  M1.setLogFile("M1.dat");
+  M2.setLogFile("M2.dat");
+
+  double q0 = M1.getPosition();
+  M1.setCmd({q0, 0., .05, 0.002, 0.});
+
+  q0 = M2.getPosition();
+  M2.setCmd({q0, 0., .05, 0.002, 0.});
+
+  sleep(5);
 }
 
 int main(int argc, char **argv){
 
-  const char* devPath = "/dev/hidraw2";
+  const char* devPath = "/dev/hidraw3";
   if(argc>1) devPath = argv[1];
 
-  //miniTest(devPath);
-  threadTest(devPath);
+  miniTest(devPath, argc, argv);
+//  threadTest(devPath);
+//  threadMultiple("/dev/hidraw2", "/dev/hidraw3");
 
   cout <<"BYE BYE" <<endl;
 

@@ -1,6 +1,6 @@
 # SimplexMotion driver
 
-STILL IN HEAVY DEVELOPMENT
+Status: Tested with one and two motors, with threaded computer-side PD torque controllers
 
 This package implements control interfaces for SimplexMotion servo
 motors. It was developed on a standard Linux (Ubuntu) and tested for
@@ -44,7 +44,18 @@ make
 sudo chmod a+rw /dev/hidraw*
 ```
 
-* check source at test/test.cpp, then try it, e.g.
+## Testing & Calibration
+
+The `test/test.cpp` implements basic testing of the motors, including simple methods to calibrate cogging, rund constant speed, run direct torque controllers, run the threaded computer-side torque controller. Please look into the source code.
+
+A basic test (running small constant speed) is
 ```
 ./simplexMotionTest /dev/hidraw0
 ```
+
+Cogging calibration is
+```
+./simplexMotionTest /dev/hidraw0 cogging
+```
+
+To test threads and multi-motors, change the source directly.

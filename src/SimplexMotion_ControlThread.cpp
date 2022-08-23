@@ -1,13 +1,12 @@
 #include "SimplexMotion_ControlThread.h"
 #include <iostream>
+#include <fstream>
 
 SimplexMotion_ControlThread::SimplexMotion_ControlThread(const char* devPath, unsigned short vendor_id, unsigned short product_id)
   : M(devPath, vendor_id, product_id),
     th(&SimplexMotion_ControlThread::loop, this){
-  {
-    std::lock_guard<std::mutex> lock(mx);
-    state.q = M.getMotorPosition();
-    state.qDot = M.getMotorSpeed();
+  while(getCtrlTime()<.1){
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
 
@@ -17,6 +16,7 @@ SimplexMotion_ControlThread::~SimplexMotion_ControlThread(){
     stop=true;
   }
   th.join();
+  if(fil) delete fil;
 }
 
 void SimplexMotion_ControlThread::loop(){
@@ -24,7 +24,8 @@ void SimplexMotion_ControlThread::loop(){
   CtrlState _state;
 
   //torque mode
-  M.setMode(40);
+  M.runReset(); //resets position counter
+  M.runTorque(0.); //starts torque mode
 
   //setup metronome
   auto ticTime = std::chrono::high_resolution_clock::now() + std::chrono::duration<double>(0.);
@@ -64,11 +65,17 @@ void SimplexMotion_ControlThread::loop(){
       state = _state;
     }
 
-    std::cout <<_state.ctrlTime <<' ' <<_state.q <<' ' <<_state.u <<' ' <<M.getMotorTorque() <<std::endl;
+    if(fil) (*fil) <<_state.ctrlTime <<' ' <<_state.q <<' ' <<_state.qDot <<' ' <<_state.u <<std::endl;
   }
 
   //stop
-  M.setMode(0);
+  M.runStop();
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  M.runOff();
+}
+
+void SimplexMotion_ControlThread::setLogFile(const char* filename){
+  if(!fil) fil = new std::ofstream(filename);
 }
 
 void SimplexMotion_ControlThread::setCmd(CtrlCmd _cmd){
@@ -79,4 +86,9 @@ void SimplexMotion_ControlThread::setCmd(CtrlCmd _cmd){
 double SimplexMotion_ControlThread::getPosition(){
   std::lock_guard<std::mutex> lock(mx);
   return state.q;
+}
+
+double SimplexMotion_ControlThread::getCtrlTime(){
+  std::lock_guard<std::mutex> lock(mx);
+  return state.ctrlTime;
 }

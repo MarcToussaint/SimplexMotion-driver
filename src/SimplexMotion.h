@@ -35,6 +35,7 @@ struct SimplexMotion{
   void setTarget(int target);
 
   void runOff(){ setMode(0); }
+  void runReset(){ setMode(1); }
   void runStop(){ setMode(5); }
   void runCoggingCalibration(){ setMode(110); }
   void runSpeed(double speed){ setTarget(256.*speed/RAI_2PI); setMode(33); } //using ramp & PID; activates SpeedRamp control mode

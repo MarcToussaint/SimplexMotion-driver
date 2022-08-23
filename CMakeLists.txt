@@ -25,20 +25,13 @@ include_directories(
 link_directories(
   )
 
+set(SRCS
+  src/SimplexMotion.cpp
+  src/SimplexMotion_ControlThread.cpp
+  src/SimplexMotion-com.cpp)
+  
 if(USE_HIDRAW)
-  set(SRCS
-    src/SimplexMotion.cpp
-    src/SimplexMotion_ControlThread.cpp
-    src/SimplexMotion-com.cpp
-    src/SimplexMotion-hidraw.cpp)
-endif()
-
-if(USE_HIDAPI)
-  set(SRCS
-    src/SimplexMotion.cpp
-    src/SimplexMotion_ControlThread.cpp
-    src/SimplexMotion-com.cpp
-    src/SimplexMotion-hidapi.cpp)
+add_compile_options( -DUSE_HIDRAW )
 endif()
 
 ################################################################################
