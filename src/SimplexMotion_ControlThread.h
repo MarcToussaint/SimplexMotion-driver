@@ -18,6 +18,7 @@ struct SimplexMotion_ControlThread{
   void setCmd(CtrlCmd _cmd);
   double getPosition();
   double getCtrlTime();
+  void setCtrlTime(double t);
 
 private:
   SimplexMotion M;

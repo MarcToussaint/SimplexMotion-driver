@@ -62,6 +62,7 @@ void SimplexMotion_ControlThread::loop(){
     //publish state
     {
       std::lock_guard<std::mutex> lock(mx);
+      if(state.ctrlTime>_state.ctrlTime) _state.ctrlTime=state.ctrlTime+tau; //adopt a larger ctrlTime set from outside
       state = _state;
     }
 
@@ -91,4 +92,9 @@ double SimplexMotion_ControlThread::getPosition(){
 double SimplexMotion_ControlThread::getCtrlTime(){
   std::lock_guard<std::mutex> lock(mx);
   return state.ctrlTime;
+}
+
+void SimplexMotion_ControlThread::setCtrlTime(double t){
+  std::lock_guard<std::mutex> lock(mx);
+  state.ctrlTime = t;
 }

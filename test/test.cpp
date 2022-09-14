@@ -60,13 +60,17 @@ void threadMultiple(const char* devPath1, const char* devPath2){
   SimplexMotion_ControlThread M1(devPath1);
   SimplexMotion_ControlThread M2(devPath2);
 
+  M2.setCtrlTime( M1.getCtrlTime() );
+
   M1.setLogFile("M1.dat");
   M2.setLogFile("M2.dat");
 
   double q0 = M1.getPosition();
+  q0 += 1.;
   M1.setCmd({q0, 0., .05, 0.002, 0.});
 
   q0 = M2.getPosition();
+  q0 -= 1.;
   M2.setCmd({q0, 0., .05, 0.002, 0.});
 
   sleep(5);
@@ -77,9 +81,9 @@ int main(int argc, char **argv){
   const char* devPath = "/dev/hidraw3";
   if(argc>1) devPath = argv[1];
 
-  miniTest(devPath, argc, argv);
+//  miniTest(devPath, argc, argv);
 //  threadTest(devPath);
-//  threadMultiple("/dev/hidraw2", "/dev/hidraw3");
+  threadMultiple("/dev/hidraw0", "/dev/hidraw1");
 
   cout <<"BYE BYE" <<endl;
 
