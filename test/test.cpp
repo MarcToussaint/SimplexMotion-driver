@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <string.h>
+#include <fstream>
 
 using std::cout;
 using std::endl;
@@ -65,13 +66,19 @@ void threadMultiple(const char* devPath1, const char* devPath2){
   M1.setLogFile("M1.dat");
   M2.setLogFile("M2.dat");
 
+  std::ifstream fil("experiment.config");
+  double q_ref=0., qDot_ref=0., Kp=.05, Kd=.002, u_b=0.;
+  fil >>q_ref >>qDot_ref >>Kp >>Kd >>u_b;
+  fil.close();
+  cout <<"USING: " <<q_ref <<' ' <<qDot_ref <<' ' <<Kp <<' ' <<Kd <<' ' <<u_b <<endl;
+
   double q0 = M1.getPosition();
-  q0 += 1.;
-  M1.setCmd({q0, 0., .05, 0.002, 0.});
+  q0 += q_ref;
+  M1.setCmd({q0, qDot_ref, Kp, Kd, u_b});
 
   q0 = M2.getPosition();
-  q0 -= 1.;
-  M2.setCmd({q0, 0., .05, 0.002, 0.});
+  q0 -= q_ref;
+  M2.setCmd({q0, qDot_ref, Kp, Kd, u_b});
 
   sleep(5);
 }
